@@ -10,8 +10,9 @@ import UIKit
 class MainViewController : UIViewController {
 
     private lazy var tableView : UITableView = {
-        let table = UITableView(frame: .zero, style: .plain)
+        let table = UITableView(frame: .zero, style: .grouped)
         table.translatesAutoresizingMaskIntoConstraints = false
+        table.backgroundColor = nil
         table.delegate = self
         table.dataSource = self
         table.rowHeight = UITableView.automaticDimension
@@ -21,12 +22,18 @@ class MainViewController : UIViewController {
         return table
     }()
 
+    private lazy var myRefreshControl : UIRefreshControl = {
+        let refresh = UIRefreshControl()
+        refresh.addTarget(self, action: #selector(refresh(sender: )), for: .valueChanged)
+        return refresh
+    }()
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
         self.navigationItem.setHidesBackButton(true, animated: true)
 
-        self.title = "Unknown, Unknown"
+        self.title = "Омск, Россия"
 
         let leftBarItem = UIBarButtonItem(
             image: UIImage(named: "settings"),
@@ -49,7 +56,7 @@ class MainViewController : UIViewController {
 
         view.addSubview(tableView)
 
-
+        tableView.refreshControl = myRefreshControl
 
         NSLayoutConstraint.activate([
 
@@ -60,8 +67,23 @@ class MainViewController : UIViewController {
 
         ])
 
+    }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.tableView.reloadData()
+        }
+    }
 
+    @objc
+    func refresh(sender : UIRefreshControl){
+        NetworkManager.request(for: AppConfiguration.second)
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.tableView.reloadData()
+        }
+        sender.endRefreshing()
     }
 
     @objc
@@ -76,17 +98,25 @@ class MainViewController : UIViewController {
 }
 
 extension MainViewController : UITableViewDelegate {
-    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        if section == 1 {
-            return "Подробнее на 24 часа"
-        } else {
-            return "Ежедневный прогноз"
-        }
-    }
+//    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+//        if section == 2 {
+//            return "Ежедневный прогноз"
+//        } else {
+//            return " "
+//        }
+//    }
 
     func tableView(_ tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
         if section == 0  {
-            return CustomTableHeaderView()
+            let view = CustomTableHeaderSection0View()
+            view.setup(weather: currentWeather)
+            return view
+
+        }
+
+        if section == 1 {
+            let view = CustomTableHeaderSection1View()
+            return view
         }
         return nil
     }
@@ -95,14 +125,14 @@ extension MainViewController : UITableViewDelegate {
 extension MainViewController : UITableViewDataSource {
 
     func numberOfSections(in tableView: UITableView) -> Int {
-        3
+        2
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         if section == 0 {
             return 0
         } else if section == 1 {
-            return 1
+            return 0
         } else {
             return 7
         }
@@ -110,12 +140,15 @@ extension MainViewController : UITableViewDataSource {
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
-        if indexPath.section == 1 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "customSectionOneTableViewCell", for: indexPath)
-            return cell
-        }
+//        if indexPath.section == 2 {
+//            let cell = tableView.dequeueReusableCell(withIdentifier: "customSectionTwoTableViewCell", for: indexPath)
+//
+//            return cell
+//        }
+
 
         let cell = tableView.dequeueReusableCell(withIdentifier: "customSectionTwoTableViewCell", for: indexPath)
+        cell.backgroundColor = .systemGreen
         return cell
 
     }

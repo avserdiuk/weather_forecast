@@ -11,6 +11,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     var window: UIWindow?
     var navigationController: UINavigationController?
+    var appConfiguration: AppConfiguration?
 
 
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
@@ -21,11 +22,21 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
         navigationController = UINavigationController()
         navigationController?.pushViewController(ViewController(), animated: false)
+        //navigationController?.pushViewController(MainViewController(), animated: false)
 
         let window = UIWindow(windowScene: windowScene)
         window.rootViewController = navigationController
         window.makeKeyAndVisible()
         self.window = window
+
+        // Выполняем запросы в сеть
+        appConfiguration = AppConfiguration.second
+
+        if let config = appConfiguration {
+            NetworkManager.request(for: config)
+        } else {
+            print("❗️Bad url to request")
+        }
 
     }
 
